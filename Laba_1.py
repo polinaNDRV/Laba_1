@@ -2,11 +2,46 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import random
 import pyperclip
+from collections import Counter
 
 # Словарь с русским алфавитом и соответствующими зашифрованными символами
 ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
 CIPHER_ALPHABET = ''.join(random.sample(ALPHABET, len(ALPHABET)))
 
+# Частоты букв в русском языке (примерные значения)
+RUSSIAN_FREQ = {
+    'о': 0.107,
+    'е': 0.085,
+    'а': 0.080,
+    'и': 0.075,
+    'н': 0.067,
+    'т': 0.062,
+    'с': 0.054,
+    'р': 0.050,
+    'л': 0.045,
+    'к': 0.037,
+    'д': 0.034,
+    'у': 0.031,
+    'м': 0.030,
+    'п': 0.029,
+    'я': 0.027,
+    'ь': 0.026,
+    'г': 0.025,
+    'з': 0.020,
+    'й': 0.020,
+    'в': 0.017,
+    'ч': 0.015,
+    'х': 0.013,
+    'ж': 0.012,
+    'ш': 0.011,
+    'щ': 0.009,
+    'ц': 0.008,
+    'ъ': 0.005,
+    'э': 0.004,
+    'ю': 0.003,
+    'ф': 0.002,
+    'ы': 0.002,
+}
 
 def encrypt(text):
     result = ''
@@ -31,6 +66,11 @@ def decrypt(text):
 
 
 def crack(text):
+    # Подсчет частоты символов в зашифрованном тексте
+    counter = Counter(char for char in text.lower() if char in CIPHER_ALPHABET)
+    most_common = counter.most_common(5)  # 5 самых частых символов
+
+    # Подбор наиболее вероятных замен
     results = []
     for i in range(len(ALPHABET)):
         result = ''
@@ -40,8 +80,16 @@ def crack(text):
                 result += ALPHABET[(index + i) % len(ALPHABET)]
             else:
                 result += char
-        results.append(f"Вариант {i + 1}: {result}")
-    return "\n".join(results)
+
+        # Оценка вероятности результата на основе частот
+        score = sum(RUSSIAN_FREQ.get(c, 0) for c in set(result))
+        results.append((result, score))
+
+    # Сортировка по вероятности и выбор 5 лучших
+    results.sort(key=lambda x: x[1], reverse=True)
+    best_results = results[:5]
+
+    return "\n".join(f"Вариант {i + 1}: {res[0]}" for i, res in enumerate(best_results))
 
 
 def main():
